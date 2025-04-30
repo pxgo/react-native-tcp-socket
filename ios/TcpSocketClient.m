@@ -584,7 +584,7 @@ NSString *const RCTTCPErrorDomain = @"RCTTCPErrorDomain";
     [sock disconnect];
 }
 
-- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err {
+/* - (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err {
     if (!_clientDelegate) {
         RCTLogWarn(@"socketDidDisconnect with nil clientDelegate for %@",
                    [sock userData]);
@@ -594,6 +594,21 @@ NSString *const RCTTCPErrorDomain = @"RCTTCPErrorDomain";
     [_clientDelegate
           onClose:[sock userData]
         withError:(!err || err.code == GCDAsyncSocketClosedError ? nil : err)];
+} */
+
+- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err {
+    if (!_clientDelegate) {
+        RCTLogWarn(@"socketDidDisconnect with nil clientDelegate for %@", [sock userData]);
+        return;
+    }
+    id<SocketClientDelegate> delegate = _clientDelegate;
+    if ([delegate respondsToSelector:@selector(onClose:withError:)]) {
+        [delegate onClose:[sock userData] withError:(!err || err.code == GCDAsyncSocketClosedError ? nil : err)];
+    }
+}
+
+- (void)appDidEnterBackground {
+    [self.tcpSocketClient pause];
 }
 
 typedef NS_ENUM(NSInteger, PEMType) {
